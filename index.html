@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TOTP 管理器</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>TOTP 管理器（GitHub Pages）</h1>
+    <nav>
+      <button id="nav-auth">GitHub 登录</button>
+      <button id="nav-unlock">解锁数据</button>
+      <button id="nav-list">TOTP 列表</button>
+      <button id="nav-settings">设置</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="view-auth" class="view">
+      <h2>GitHub 设备授权</h2>
+      <div id="auth-status"></div>
+      <button id="start-device-flow">开始授权</button>
+      <div id="device-flow-details" class="card hidden">
+        <p>请打开 <span id="verification-uri"></span> 并输入代码：</p>
+        <h3 id="user-code"></h3>
+        <p>等待授权完成后，令牌将自动保存到浏览器。</p>
+        <button id="poll-token">开始轮询令牌</button>
+      </div>
+    </section>
+
+    <section id="view-unlock" class="view hidden">
+      <h2>解锁 TOTP 数据</h2>
+      <div class="form">
+        <label>密码
+          <input type="password" id="input-password" placeholder="输入密码" />
+        </label>
+        <label>私钥（PEM）
+          <textarea id="input-private-key" rows="6" placeholder="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"></textarea>
+        </label>
+        <button id="btn-load-decrypt">拉取并解密数据</button>
+        <div id="unlock-status"></div>
+      </div>
+    </section>
+
+    <section id="view-list" class="view hidden">
+      <h2>TOTP 列表</h2>
+      <div id="countdown" class="progress"><div class="bar" id="progress-bar"></div></div>
+      <ul id="totp-list" class="list"></ul>
+      <details>
+        <summary>新增/编辑条目</summary>
+        <div class="form" id="edit-form">
+          <label>名称 <input id="edit-name" /></label>
+          <label>发行方 <input id="edit-issuer" /></label>
+          <label>密钥（Base32 或 十六进制） <input id="edit-secret" /></label>
+          <label>算法
+            <select id="edit-algo">
+              <option value="SHA1">SHA1</option>
+              <option value="SHA256">SHA256</option>
+              <option value="SHA512">SHA512</option>
+            </select>
+          </label>
+          <label>位数
+            <select id="edit-digits">
+              <option value="6">6</option>
+              <option value="8">8</option>
+            </select>
+          </label>
+          <label>类型
+            <select id="edit-type">
+              <option value="TOTP">TOTP</option>
+              <option value="HOTP">HOTP</option>
+            </select>
+          </label>
+          <label>计数器（HOTP） <input id="edit-counter" type="number" value="0" /></label>
+          <button id="btn-add-update">保存条目</button>
+        </div>
+      </details>
+      <div class="actions">
+        <button id="btn-save-upload">重新加密并上传到仓库</button>
+      </div>
+      <div id="list-status"></div>
+    </section>
+
+    <section id="view-settings" class="view hidden">
+      <h2>设置</h2>
+      <div class="form">
+        <label>OAuth Client ID <input id="cfg-client-id" /></label>
+        <label>仓库 Owner <input id="cfg-owner" /></label>
+        <label>仓库 Repo <input id="cfg-repo" /></label>
+        <label>数据文件路径 <input id="cfg-path" placeholder="data/totp.enc.json" /></label>
+        <label>公钥（PEM，写死或在此设置）
+          <textarea id="cfg-public-key" rows="6" placeholder="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"></textarea>
+        </label>
+        <button id="btn-save-config">保存配置</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <small>本工具在浏览器本地运行，不会上传私钥和密码。仅使用令牌访问指定私有仓库的数据文件。</small>
+  </footer>
+
+  <script src="scripts/config.js"></script>
+  <script src="scripts/device_flow.js"></script>
+  <script src="scripts/github_api.js"></script>
+  <script src="scripts/proto.js"></script>
+  <script src="scripts/crypto.js"></script>
+  <script src="scripts/totp.js"></script>
+  <script src="scripts/app.js"></script>
+</body>
+</html>
