@@ -114,19 +114,29 @@
         unlockStatus.textContent = '仓库未发现数据文件，将从空列表开始。';
         currentData = { otp_parameters: [], version: 1, batch_size: 1, batch_index: 0, batch_id: 1 };
         currentSha = null;
-        // 首次拉取也保存一次输入到 storage，便于后续使用
         saveSecretsToStorage();
         renderList();
         return;
       }
       currentSha = file.sha;
-      const enc = JSON.parse(file.content);
+      let enc;
+      try{
+        enc = JSON.parse(file.content);
+      }catch(e){
+        throw new Error('数据格式错误：不是有效的 JSON');
+      }
       unlockStatus.textContent = '解密中...';
-      // 拉取解密前保存一次，以便后续自动填充
       saveSecretsToStorage();
       const plain = await TOTP_CRYPTO.decryptDataWithHybrid(enc, inputPrivateKey.value.trim(), inputPassword.value);
-      const decoded = TOTP_PROTO.decodeUint8(plain);
-      currentData = JSON.parse(JSON.stringify(decoded));
+      const decodedObj = TOTP_PROTO.decodeToObject(plain);
+      // 保护性处理：确保必要字段存在
+      currentData = {
+        otp_parameters: Array.isArray(decodedObj.otp_parameters) ? decodedObj.otp_parameters : [],
+        version: decodedObj.version || 1,
+        batch_size: decodedObj.batch_size || 1,
+        batch_index: decodedObj.batch_index || 0,
+        batch_id: decodedObj.batch_id || 1,
+      };
       unlockStatus.textContent = '解密成功，加载列表';
       renderList();
     }catch(e){
@@ -223,11 +233,17 @@
   // 初始：检查 token 存在与否
   function init(){
     loadConfigToUI();
-    // 初始化时从 storage 预填充私钥和密码
     loadSecretsFromStorage();
     const hasTok = GH_DEVICE.hasToken();
     document.getElementById('auth-status').textContent = hasTok ? '已检测到 token' : '尚未授权（请使用 PAT 登录）';
-    show(hasTok ? 'unlock' : 'auth');
+    // 如果已有 token 且私钥/密码都存在，自动拉取并解码
+    if(hasTok && (inputPrivateKey.value.trim().length > 0) && (inputPassword.value.length > 0)){
+      show('unlock');
+      // 稍作延迟，等待视图切换后执行，避免状态信息被覆盖
+      setTimeout(fetchAndDecrypt, 10);
+    }else{
+      show(hasTok ? 'unlock' : 'auth');
+    }
   }
   init();
 })();

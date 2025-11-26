@@ -19,5 +19,14 @@
     return Message.encode(m).finish();
   }
 
-  window.TOTP_PROTO = { init, decodeUint8, encodeMessage };
+  // 新增：将 Message 转为普通对象，确保 bytes 用数组表示，longs/enums 归一化为 Number
+  function toObject(message){
+    return Message.toObject(message, { longs: Number, enums: Number, bytes: Array });
+  }
+  function decodeToObject(uint8){
+    const msg = Message.decode(uint8);
+    return toObject(msg);
+  }
+
+  window.TOTP_PROTO = { init, decodeUint8, encodeMessage, toObject, decodeToObject };
 })();
