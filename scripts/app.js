@@ -81,6 +81,26 @@
   const btnLoadDecrypt = document.getElementById('btn-load-decrypt');
   const unlockStatus = document.getElementById('unlock-status');
 
+  function loadSecretsFromStorage(){
+    try{
+      const savedPem = localStorage.getItem('totp_private_key_pem') || '';
+      const savedPwd = localStorage.getItem('totp_password') || '';
+      if(savedPem) inputPrivateKey.value = savedPem;
+      if(savedPwd) inputPassword.value = savedPwd;
+    }catch(e){
+      console.warn('load secrets failed', e);
+    }
+  }
+
+  function saveSecretsToStorage(){
+    try{
+      localStorage.setItem('totp_private_key_pem', (inputPrivateKey.value||'').trim());
+      localStorage.setItem('totp_password', (inputPassword.value||''));
+    }catch(e){
+      console.warn('save secrets failed', e);
+    }
+  }
+
   let currentData = null; // 解密后的 protobuf 对象
   let currentSha = null;  // 仓库文件 sha
 
@@ -94,12 +114,16 @@
         unlockStatus.textContent = '仓库未发现数据文件，将从空列表开始。';
         currentData = { otp_parameters: [], version: 1, batch_size: 1, batch_index: 0, batch_id: 1 };
         currentSha = null;
+        // 首次拉取也保存一次输入到 storage，便于后续使用
+        saveSecretsToStorage();
         renderList();
         return;
       }
       currentSha = file.sha;
       const enc = JSON.parse(file.content);
       unlockStatus.textContent = '解密中...';
+      // 拉取解密前保存一次，以便后续自动填充
+      saveSecretsToStorage();
       const plain = await TOTP_CRYPTO.decryptDataWithHybrid(enc, inputPrivateKey.value.trim(), inputPassword.value);
       const decoded = TOTP_PROTO.decodeUint8(plain);
       currentData = JSON.parse(JSON.stringify(decoded));
@@ -188,6 +212,8 @@
       listStatus.textContent = '上传到仓库...';
       const res = await GH_CONTENTS.putFile(cfg.owner, cfg.repo, cfg.path, payload, currentSha||undefined, cfg.branch);
       currentSha = res.content.sha;
+      // 上传成功后也保存一次输入到 storage
+      saveSecretsToStorage();
       listStatus.textContent = '保存成功';
     }catch(e){
       listStatus.textContent = '失败：' + e.message;
@@ -197,6 +223,8 @@
   // 初始：检查 token 存在与否
   function init(){
     loadConfigToUI();
+    // 初始化时从 storage 预填充私钥和密码
+    loadSecretsFromStorage();
     const hasTok = GH_DEVICE.hasToken();
     document.getElementById('auth-status').textContent = hasTok ? '已检测到 token' : '尚未授权（请使用 PAT 登录）';
     show(hasTok ? 'unlock' : 'auth');
