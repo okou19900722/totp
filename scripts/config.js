@@ -6,6 +6,7 @@
     repo: '',
     path: 'data/totp.enc.bin',
     public_key_pem: '',
+    branch: 'main',
     // 固定：授权 scope，最小化权限（只读/只写内容）
     scope: 'repo'
   };

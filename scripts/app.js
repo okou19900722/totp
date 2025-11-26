@@ -89,7 +89,7 @@
       unlockStatus.textContent = '拉取仓库数据...';
       await TOTP_PROTO.init();
       const cfg = TOTP_CFG.getConfig();
-      const file = await GH_CONTENTS.getFile(cfg.owner, cfg.repo, cfg.path);
+      const file = await GH_CONTENTS.getFile(cfg.owner, cfg.repo, cfg.path, cfg.branch);
       if(!file){
         unlockStatus.textContent = '仓库未发现数据文件，将从空列表开始。';
         currentData = { otp_parameters: [], version: 1, batch_size: 1, batch_index: 0, batch_id: 1 };
@@ -186,7 +186,7 @@
       const enc = await TOTP_CRYPTO.encryptDataWithHybrid(uint8, cfg.public_key_pem, inputPassword.value);
       const payload = JSON.stringify(enc);
       listStatus.textContent = '上传到仓库...';
-      const res = await GH_CONTENTS.putFile(cfg.owner, cfg.repo, cfg.path, payload, currentSha||undefined);
+      const res = await GH_CONTENTS.putFile(cfg.owner, cfg.repo, cfg.path, payload, currentSha||undefined, cfg.branch);
       currentSha = res.content.sha;
       listStatus.textContent = '保存成功';
     }catch(e){
