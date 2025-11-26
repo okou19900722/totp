@@ -43,26 +43,37 @@
   const deviceDetails = document.getElementById('device-flow-details');
   const verificationUri = document.getElementById('verification-uri');
   const userCode = document.getElementById('user-code');
+  // 移除设备授权相关元素获取
+  const patInput = document.getElementById('pat-input');
+  const openPatBtn = document.getElementById('open-pat-page');
+  const savePatBtn = document.getElementById('save-pat');
 
-  startBtn.onclick = async () => {
-    try{
-      const d = await GH_DEVICE.startDeviceFlow();
-      deviceDetails.classList.remove('hidden');
-      verificationUri.textContent = d.verification_uri || 'https://github.com/login/device';
-      userCode.textContent = d.user_code;
-      authStatus.textContent = '请前往 GitHub 完成授权';
-      pollBtn.onclick = async () => {
-        const res = await GH_DEVICE.pollForToken(d.device_code);
-        if(res.error){
-          authStatus.textContent = '等待授权中: ' + (res.error_description || res.error);
-        }else{
-          authStatus.textContent = '授权成功，token 已保存';
-        }
-      };
-    }catch(e){
-      authStatus.textContent = '设备授权失败：' + e.message;
-    }
+  // PAT 相关：打开 token 生成页、保存 PAT
+  openPatBtn.onclick = () => {
+    window.open('https://github.com/settings/personal-access-tokens/new', '_blank');
   };
+  savePatBtn.onclick = () => {
+    const pat = (patInput?.value||'').trim();
+    if(!pat){
+      alert('请先粘贴 PAT');
+      return;
+    }
+    GH_DEVICE.setToken(pat);
+    authStatus.textContent = '已保存 PAT 到浏览器';
+    show('unlock');
+  };
+
+  // 设备授权功能已移除，保留占位避免报错
+  if (startBtn) {
+    startBtn.onclick = () => {
+      authStatus.textContent = '设备授权已移除，请使用 PAT 登录';
+    };
+  }
+  if (pollBtn) {
+    pollBtn.onclick = () => {
+      authStatus.textContent = '设备授权已移除，请使用 PAT 登录';
+    };
+  }
 
   // 解锁视图
   const inputPassword = document.getElementById('input-password');
@@ -187,8 +198,7 @@
   function init(){
     loadConfigToUI();
     const hasTok = GH_DEVICE.hasToken();
-    document.getElementById('auth-status').textContent = hasTok ? '已检测到 token' : '尚未授权';
-    // 默认进入列表或解锁
+    document.getElementById('auth-status').textContent = hasTok ? '已检测到 token' : '尚未授权（请使用 PAT 登录）';
     show(hasTok ? 'unlock' : 'auth');
   }
   init();

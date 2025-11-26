@@ -20,14 +20,21 @@
 
   <main>
     <section id="view-auth" class="view">
-      <h2>GitHub 设备授权</h2>
+      <h2>GitHub 登录（PAT）</h2>
       <div id="auth-status"></div>
-      <button id="start-device-flow">开始授权</button>
-      <div id="device-flow-details" class="card hidden">
-        <p>请打开 <span id="verification-uri"></span> 并输入代码：</p>
-        <h3 id="user-code"></h3>
-        <p>等待授权完成后，令牌将自动保存到浏览器。</p>
-        <button id="poll-token">开始轮询令牌</button>
+      
+      <div class="card" style="margin-top:16px;">
+        <h3>使用个人访问令牌（PAT）登录（推荐）</h3>
+        <p>如果设备授权在浏览器中受跨域限制，请改用 PAT。点击下方按钮打开 GitHub 的令牌生成页面，在生成并复制令牌后粘贴到输入框并保存。</p>
+        <div class="form">
+          <label>粘贴 PAT
+            <input type="text" id="pat-input" placeholder="ghp_... 或 fine-grained PAT" />
+          </label>
+          <div class="actions">
+            <button id="open-pat-page">打开 GitHub Token 生成页</button>
+            <button id="save-pat">保存令牌</button>
+          </div>
+        </div>
       </div>
     </section>
 
