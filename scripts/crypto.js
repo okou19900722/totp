@@ -19,10 +19,10 @@
   }
 
   async function deriveRawFromPassword(password, salt){
-    const baseKey = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveKey']);
-    const k = await crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations: 150000, hash:'SHA-256' }, baseKey, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
-    const raw = new Uint8Array(await crypto.subtle.exportKey('raw', k));
-    return raw; // 32 bytes
+    // 通过 deriveBits 直接得到原始字节，避免对不可导出的密钥执行 exportKey
+    const baseKey = await crypto.subtle.importKey('raw', str2buf(password), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name:'PBKDF2', salt, iterations: 150000, hash:'SHA-256' }, baseKey, 256);
+    return new Uint8Array(bits); // 32 bytes
   }
   async function importAesKey(raw){
     return crypto.subtle.importKey('raw', raw, { name:'AES-GCM' }, false, ['encrypt','decrypt']);
