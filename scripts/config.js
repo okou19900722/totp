@@ -1,19 +1,17 @@
 // 站点配置的读取与保存
 (function(){
   const defaultConfig = {
-    client_id: '',
+    token: '',
     owner: '',
     repo: '',
-    path: 'data/totp.enc.bin',
     public_key_pem: '',
-    branch: 'main',
-    // 固定：授权 scope，最小化权限（只读/只写内容）
-    scope: 'repo'
+    private_key_pem: ''
   };
 
+  const TOKEN_KEY = 'totp_config';
   function getConfig(){
     try {
-      const raw = localStorage.getItem('totp_config');
+      const raw = localStorage.getItem(TOKEN_KEY);
       return raw ? { ...defaultConfig, ...JSON.parse(raw) } : defaultConfig;
     } catch(e){
       console.warn('parse config failed', e);
@@ -22,8 +20,12 @@
   }
 
   function saveConfig(cfg){
-    localStorage.setItem('totp_config', JSON.stringify(cfg));
+    localStorage.setItem(TOKEN_KEY, JSON.stringify(cfg));
   }
 
-  window.TOTP_CFG = { getConfig, saveConfig };
+  function hasConfig(){
+    return !!localStorage.getItem(TOKEN_KEY);
+  }
+
+  window.TOTP_CFG = { getConfig, saveConfig, hasConfig };
 })();

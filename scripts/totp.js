@@ -15,6 +15,7 @@
       bits += val.toString(2).padStart(5,'0');
     }
     const bytes = new Uint8Array(Math.floor(bits.length/8));
+    console.log("llll", bytes.length)
     for(let i=0;i<bytes.length;i++) bytes[i] = parseInt(bits.slice(i*8,i*8+8),2);
     return bytes;
   }

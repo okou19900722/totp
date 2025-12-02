@@ -1,12 +1,22 @@
 // GitHub Contents API 读取/写入加密数据文件（支持空仓库首次提交）
 (function(){
   function headers(){
-    const token = GH_DEVICE.getToken();
+    var cfg = TOTP_CFG.getConfig();
+    const token = cfg.token;
     if(!token) throw new Error('未找到 GitHub token');
     return {
       'Authorization': `token ${token}`,
       'Accept': 'application/vnd.github+json'
     };
+  }
+
+  async function getSha(owner, repo, branch) {
+    const url = `https://api.github.com/repos/${owner}/${repo}/branches`;
+    const resp = await fetch(url, { headers: headers() });
+    if(resp.status === 404) return null;
+    if(!resp.ok) throw new Error('读取文件失败');
+    const data = await resp.json();
+    return data.find(i => i.name === branch).commit.sha;
   }
 
   async function getFile(owner, repo, path, branch){
@@ -15,13 +25,13 @@
     if(resp.status === 404) return null;
     if(!resp.ok) throw new Error('读取文件失败');
     const data = await resp.json();
-    const content = atob(data.content.replace(/\n/g, ''));
+    const content = data.content;
     return { sha: data.sha, content };
   }
 
   async function initRepoWithFile(owner, repo, branch, path, content){
     const hdrs = { ...headers(), 'Content-Type': 'application/json' };
-    const base64 = btoa(content);
+    const base64 = content;
     // 1) 创建 blob
     const blobResp = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/blobs`, {
       method: 'POST', headers: hdrs, body: JSON.stringify({ content: base64, encoding: 'base64' })
@@ -57,7 +67,7 @@
     const url = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
     const body = {
       message: sha ? 'Update TOTP data' : 'Create TOTP data',
-      content: btoa(content),
+      content: content,
       ...(sha ? { sha } : {}),
       ...(branch ? { branch } : {})
     };
@@ -66,12 +76,12 @@
       return await resp.json();
     }
     // 首次部署或无默认分支时，尝试使用 Git Data API 初始化仓库并写入文件
-    if(resp.status === 409 || resp.status === 422){
+    if(resp.status === 409 || resp.status === 422 || resp.status === 404){
       return await initRepoWithFile(owner, repo, branch||'main', path, content);
     }
     const errText = await resp.text();
     throw new Error(`写入文件失败（${resp.status}）：${errText}`);
   }
 
-  window.GH_CONTENTS = { getFile, putFile };
+  window.GH_CONTENTS = { getFile, putFile, getSha };
 })();

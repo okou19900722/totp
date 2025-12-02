@@ -6,57 +6,23 @@
   <title>TOTP 管理器</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/jsencrypt/3.2.1/jsencrypt.min.js"></script>
 </head>
 <body>
   <header>
     <h1>TOTP 管理器（GitHub Pages）</h1>
     <nav>
-      <button id="nav-auth">GitHub 登录</button>
-      <button id="nav-unlock">解锁数据</button>
       <button id="nav-list">TOTP 列表</button>
       <button id="nav-settings">设置</button>
     </nav>
   </header>
 
   <main>
-    <section id="view-auth" class="view">
-      <h2>GitHub 登录（PAT）</h2>
-      <div id="auth-status"></div>
-      
-      <div class="card" style="margin-top:16px;">
-        <h3>使用个人访问令牌（PAT）登录（推荐）</h3>
-        <p>如果设备授权在浏览器中受跨域限制，请改用 PAT。点击下方按钮打开 GitHub 的令牌生成页面，在生成并复制令牌后粘贴到输入框并保存。</p>
-        <div class="form">
-          <label>粘贴 PAT
-            <input type="text" id="pat-input" placeholder="ghp_... 或 fine-grained PAT" />
-          </label>
-          <div class="actions">
-            <button id="open-pat-page">打开 GitHub Token 生成页</button>
-            <button id="save-pat">保存令牌</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="view-unlock" class="view hidden">
-      <h2>解锁 TOTP 数据</h2>
-      <div class="form">
-        <label>密码
-          <input type="password" id="input-password" placeholder="输入密码" />
-        </label>
-        <label>私钥（PEM）
-          <textarea id="input-private-key" rows="6" placeholder="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"></textarea>
-        </label>
-        <button id="btn-load-decrypt">拉取并解密数据</button>
-        <div id="unlock-status"></div>
-      </div>
-    </section>
-
     <section id="view-list" class="view hidden">
       <h2>TOTP 列表</h2>
       <div id="countdown" class="progress"><div class="bar" id="progress-bar"></div></div>
       <ul id="totp-list" class="list"></ul>
-      <details>
+      <details open>
         <summary>新增/编辑条目</summary>
         <div class="form" id="edit-form">
           <label>名称 <input id="edit-name" /></label>
@@ -85,21 +51,20 @@
           <button id="btn-add-update">保存条目</button>
         </div>
       </details>
-      <div class="actions">
-        <button id="btn-save-upload">重新加密并上传到仓库</button>
-      </div>
       <div id="list-status"></div>
     </section>
 
     <section id="view-settings" class="view hidden">
       <h2>设置</h2>
       <div class="form">
-        <label>OAuth Client ID <input id="cfg-client-id" /></label>
+        <label>Github Token <input id="cfg-token" /></label>
         <label>仓库 Owner <input id="cfg-owner" /></label>
         <label>仓库 Repo <input id="cfg-repo" /></label>
-        <label>数据文件路径 <input id="cfg-path" placeholder="data/totp.enc.json" /></label>
-        <label>公钥（PEM，写死或在此设置）
+        <label>公钥
           <textarea id="cfg-public-key" rows="6" placeholder="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"></textarea>
+        </label>
+        <label>私钥
+          <textarea id="cfg-private-key" rows="6" placeholder="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"></textarea>
         </label>
         <button id="btn-save-config">保存配置</button>
       </div>
@@ -111,7 +76,8 @@
   </footer>
 
   <script src="scripts/config.js"></script>
-  <script src="scripts/device_flow.js"></script>
+  <script src="scripts/base64.js"></script>
+  <script src="scripts/github_token.js"></script>
   <script src="scripts/github_api.js"></script>
   <script src="scripts/proto.js"></script>
   <script src="scripts/crypto.js"></script>
